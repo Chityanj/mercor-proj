@@ -48,7 +48,7 @@ const VoiceInterface = () => {
     silenceTimeoutRef.current = setTimeout(() => {
       setIsListening(false);
       console.log('Recording stopped after detecting silence.');
-    }, 2000);
+    }, 3000);
   };
 
   const resetSilenceTimeout = () => {

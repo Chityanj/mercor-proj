@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSpeechRecognition } from 'react-speech-kit';
 import axios from 'axios';
 
-
 const VoiceInterface = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
   const silenceTimeoutRef = useRef(null);
   const [gptResponse, setGptResponse] = useState('');
+
+  const synthesisRef = useRef(null);
 
   const { listen, stop } = useSpeechRecognition({
     onResult: result => {
@@ -33,11 +34,21 @@ const VoiceInterface = () => {
     }
   }, [isListening]);
 
+  useEffect(() => {
+    if (gptResponse) {
+      speakGptResponse();
+    }
+
+    return () => {
+      cleanupSpeechSynthesis();
+    };
+  }, [gptResponse]);
+
   const startSilenceTimeout = () => {
     silenceTimeoutRef.current = setTimeout(() => {
       setIsListening(false);
       console.log('Recording stopped after detecting silence.');
-    }, 5000);
+    }, 2000);
   };
 
   const resetSilenceTimeout = () => {
@@ -57,22 +68,44 @@ const VoiceInterface = () => {
     }
   };
 
+  const speakGptResponse = () => {
+    if ('speechSynthesis' in window) {
+      cleanupSpeechSynthesis();
+
+      synthesisRef.current = new SpeechSynthesisUtterance(gptResponse);
+      synthesisRef.current.lang = 'en-US';
+      synthesisRef.current.onend = () => {
+        synthesisRef.current = null;
+      };
+      speechSynthesis.speak(synthesisRef.current);
+    }
+  };
+
+  const cleanupSpeechSynthesis = () => {
+    if (synthesisRef.current) {
+      synthesisRef.current.onend = null;
+      speechSynthesis.cancel();
+      synthesisRef.current = null;
+    }
+  };
+
   const handleStartListening = () => {
     setIsListening(true);
+    cleanupSpeechSynthesis();
+    resetSilenceTimeout();
   };
 
-  const handleStopListening = () => {
-    setIsListening(false);
-  };
-
+  useEffect(() => {
+    return () => {
+      cleanupSpeechSynthesis();
+      resetSilenceTimeout();
+    };
+  }, []);
 
   return (
     <div>
       <button onClick={handleStartListening} disabled={isListening}>
         Start Listening
-      </button>
-      <button onClick={handleStopListening} disabled={!isListening}>
-        Stop Listening
       </button>
       <p>Transcription: {transcription}</p>
       {gptResponse && (
@@ -81,7 +114,6 @@ const VoiceInterface = () => {
           <p>{gptResponse}</p>
         </div>
       )}
-
     </div>
   );
 };

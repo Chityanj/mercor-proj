@@ -10,17 +10,21 @@
   },
   "dependencies": {
     "annyang": "^2.6.1",
+    "axios": "^1.4.0",
     "fs": "^0.0.1-security",
     "fs-extra": "^11.1.1",
     "google-cloud-speech": "^0.0.2",
     "next": "13.4.7",
+    "openai": "^3.3.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-speech-kit": "^3.0.1",
     "react-speech-recognition": "^3.10.0"
   },
   "devDependencies": {
+    "@types/react": "18.2.14",
     "eslint": "8.43.0",
-    "eslint-config-next": "13.4.7"
+    "eslint-config-next": "13.4.7",
+    "typescript": "5.1.3"
   }
 }

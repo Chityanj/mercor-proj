@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSpeechRecognition } from 'react-speech-kit';
+import axios from 'axios';
+
 
 const VoiceInterface = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
   const silenceTimeoutRef = useRef(null);
+  const [gptResponse, setGptResponse] = useState('');
 
   const { listen, stop } = useSpeechRecognition({
     onResult: result => {
@@ -13,6 +16,12 @@ const VoiceInterface = () => {
       startSilenceTimeout();
     },
   });
+
+  useEffect(() => {
+    if (!isListening && transcription) {
+      sendTranscriptionToGPT(transcription);
+    }
+  }, [isListening, transcription]);
 
   useEffect(() => {
     if (isListening) {
@@ -36,6 +45,18 @@ const VoiceInterface = () => {
     silenceTimeoutRef.current = null;
   };
 
+  const sendTranscriptionToGPT = async (transcription) => {
+    try {
+      const response = await axios.get('/api/gpt', { params: { transcription } });
+      const gptResponse = response.data;
+      setGptResponse(gptResponse);
+      console.log('GPT Response:', gptResponse);
+      // Handle the GPT response as needed
+    } catch (error) {
+      console.error('Error sending transcription to GPT:', error);
+    }
+  };
+
   const handleStartListening = () => {
     setIsListening(true);
   };
@@ -43,6 +64,7 @@ const VoiceInterface = () => {
   const handleStopListening = () => {
     setIsListening(false);
   };
+
 
   return (
     <div>
@@ -53,6 +75,13 @@ const VoiceInterface = () => {
         Stop Listening
       </button>
       <p>Transcription: {transcription}</p>
+      {gptResponse && (
+        <div>
+          <h3>GPT Response:</h3>
+          <p>{gptResponse}</p>
+        </div>
+      )}
+
     </div>
   );
 };
